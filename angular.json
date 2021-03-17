@@ -127,5 +127,8 @@
       }
     }
   },
-  "defaultProject": "MangaNotifier"
+  "defaultProject": "MangaNotifier",
+  "cli": {
+    "analytics": "80a617f0-a5e8-4a55-ba2c-2e51728708fb"
+  }
 }

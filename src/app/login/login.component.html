@@ -1,0 +1,58 @@
+<div class="login-container">
+  <h1 *ngIf="isLogin">Login</h1>
+  <h1 *ngIf="!isLogin">Register</h1>
+  <form [formGroup]="loginForm" (ngSubmit)="isLogin ? login() : register()">
+    <p>
+      <mat-form-field appearance="outline" color="accent">
+        <mat-label>Email</mat-label>
+        <input matInput placeholder="Email" type="email" formControlName="email">
+        <!--<mat-icon matSuffix>sentiment_very_satisfied</mat-icon>-->
+        <mat-hint *ngIf="isSubmitted && formControls.email.errors">
+          <div *ngIf="formControls.email.errors.required">Email is required</div>
+        </mat-hint>
+      </mat-form-field>
+    </p>
+
+    <p>
+      <mat-form-field appearance="outline" color="accent">
+        <mat-label>Password</mat-label>
+        <input matInput placeholder="Password" type="password" formControlName="password">
+        <!--<mat-icon matSuffix>sentiment_very_satisfied</mat-icon>-->
+        <mat-hint *ngIf="isSubmitted && formControls.password.errors">
+          <div *ngIf="formControls.password.errors.required">Password is required</div>
+        </mat-hint>
+      </mat-form-field>
+    </p>
+
+    <p *ngIf="!isLogin">
+      <mat-form-field appearance="outline" color="accent">
+        <mat-label>Verify Password</mat-label>
+        <input matInput placeholder="PasswordVerify" type="password" formControlName="passwordVerify">
+        <!--<mat-icon matSuffix>sentiment_very_satisfied</mat-icon>-->
+        <mat-hint *ngIf="isSubmitted && formControls.passwordVerify.errors">
+          <div *ngIf="formControls.passwordVerify.errors.required">Verify Password is required</div>
+        </mat-hint>
+      </mat-form-field>
+    </p>
+
+    <p>
+      <button *ngIf="isLogin" color="primary" mat-button type="submit">Login</button>
+      <button *ngIf="!isLogin" color="primary" mat-button type="submit">Register</button>
+    </p>
+  </form>
+
+
+  <div>
+    <button class="google-btn" (click)="authService.googleAuth()">Google Log in</button>
+  </div>
+  <div>
+    <span>Don't have an account?
+      <a *ngIf="isLogin" (click)="toggleLogin()">Register Here</a>
+      <a *ngIf="!isLogin" (click)="toggleLogin()">Login Here</a>
+    </span>
+  </div>
+  <div>
+    <!--<span routerLink="/forgot-password">Forgot Password?</span>-->
+  </div>
+</div>
+

@@ -1,0 +1,18 @@
+<p>collection works!</p>
+<button mat-button (click)="authService.logout()">Logout</button>
+<mat-form-field appearance="outline">
+  <mat-label>Manga Sites</mat-label>
+  <mat-select [(ngModel)]="selectedSite">
+    <mat-option *ngFor="let manga of mangaSites" [value]="manga">
+      {{manga}}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+<mat-form-field appearance="outline">
+  <mat-label>Search for Manga</mat-label>
+  <input matInput #mangaKeywords (keyup.enter)="searchMangaSite(mangaKeywords.value)">
+</mat-form-field>
+<div *ngFor="let manga of mangas">
+  <img [src]="manga.img_src"/>
+  <a [href]="manga.link" target="_blank">{{manga.name}}</a>
+</div>
