@@ -1,4 +1,3 @@
-<p>collection works!</p>
 <button mat-button (click)="authService.logout()">Logout</button>
 <mat-form-field appearance="outline">
   <mat-label>Manga Sites</mat-label>
@@ -15,4 +14,11 @@
 <div *ngFor="let manga of mangas">
   <img [src]="manga.img_src"/>
   <a [href]="manga.link" target="_blank">{{manga.name}}</a>
+  <button mat-button (click)="subscribe(manga)">Add</button>
 </div>
+<div *ngFor="let sub of mangaSubscriptions">
+  <img [src]="sub.img_src" />
+  <a [href]="sub.link" target="_blank">{{sub.name}}</a>
+  <button mat-button (click)="removeSubscription(sub.id)">Get this out of Here!</button>
+</div>
+
