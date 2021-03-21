@@ -23,7 +23,7 @@ export class FirebaseService {
       return userRef.collection('subscriptions').snapshotChanges().pipe(
         map(data => {
           return data.map(res => {
-            return { ...res.payload.doc.data(), id: res.payload.doc.id }
+            return { ...res.payload.doc.data(), id: res.payload.doc.id, release_date: '', chapter_link: '', latest_chapter: 0 }
           })
         })
       ) as Observable<MangaItem[]>;
@@ -31,15 +31,13 @@ export class FirebaseService {
     return new Observable<MangaItem[]>();
   }
 
-  saveManga(manga: Manga) {
+  saveManga(manga: Manga, source: string) {
     const userJson = localStorage.getItem('user');
     if (userJson) {
       const user = JSON.parse(userJson);
       const userRef: AngularFirestoreDocument<any> = this.afs.doc(`users/${user.uid}`);
-      const data: Subscription = { ...manga, last_read: 0 };
-      // TODO: Check that manga doesn't exist in list before adding it
-      // TODO: Add Manga site source to subscription
-      // TODO: Group mangas and get all the latest chapters in one api call
+      const data: Subscription = { ...manga, source: source, last_read: 0 };
+      
       return userRef.collection('subscriptions').add(data);
     }
     return null;

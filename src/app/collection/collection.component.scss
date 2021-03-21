@@ -1,0 +1,63 @@
+.subscription-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 1em;
+}
+
+.search-results-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1em;
+}
+
+.manga-table {
+  width: 70%;
+}
+
+.manga-item {
+  display: flex;
+  flex-direction: row;
+}
+
+.manga-img {
+    width: auto;
+    height: auto;
+    max-width: 200px;
+    max-height: 200px;
+}
+
+.manga-details-container {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    padding-left: 1.5em;
+    padding-top: 1.5em;
+}
+
+.manga-details-container > * {
+  margin-bottom: 1em;
+}
+
+.manga-title {
+  font-size: medium;
+  font-weight: bold;
+  text-decoration: none;
+  color: black;
+}
+
+.chapter-details {
+    display: flex;
+    flex-direction: row;
+}
+
+.chapter-link {
+    width: 100%;
+}
+
+.chapter-date {
+    display: flex;
+    width: 100%;
+    justify-content: flex-end;
+}

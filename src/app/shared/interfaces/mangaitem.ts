@@ -2,6 +2,10 @@ export interface MangaItem {
   link: string;
   img_src: string;
   name: string;
-  last_read: number;
   id: string;
+  source: string;
+  release_date: string;
+  chapter_link: string;
+  latest_chapter: number;
+  last_read: number;
 }
