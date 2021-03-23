@@ -55,6 +55,7 @@ export class CollectionComponent implements OnInit, AfterViewInit {
   }
 
   searchMangaSite(mangaKeywords: string) {
+    // TODO: Don't search while loading results (to avoid spamming the api)
     this.mangaDataSource.search(
       this.selectedSite, mangaKeywords,
       this.paginator.toArray()[1].pageIndex, this.paginator.toArray()[1].pageSize)

@@ -5,12 +5,7 @@ import { FirebaseService } from '../services/firebase.service';
 import { MangaItem } from '../interfaces/mangaitem';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-
-interface Chapter {
-  release_date: string;
-  latest_chapter: number;
-  chapter_link: string;
-}
+import * as moment from 'moment';
 
 export class MangaItemDataSource implements DataSource<MangaItem> {
   private mangasSubject = new BehaviorSubject<MangaItem[]>([]);
@@ -18,7 +13,6 @@ export class MangaItemDataSource implements DataSource<MangaItem> {
   private lengthSubject = new BehaviorSubject<number>(0);
 
   private mangaItems: MangaItem[] = [];
-  private chapterMap = new Map<string, Chapter>();
   private pendingMangas: MangaItem[] = [];
 
   private BATCH_SIZE = 30;
@@ -27,13 +21,25 @@ export class MangaItemDataSource implements DataSource<MangaItem> {
   public length$ = this.lengthSubject.asObservable();
 
   constructor(private fbService: FirebaseService, private httpClient: HttpClient) {
+    // TODO: Properly unsubscribe from all subscriptions
     this.fbService.subscriptionAdded()
       .pipe(catchError(() => of([])))
       .subscribe(snapshot => {
-        // update latest chapter
-        this.pendingMangas.push(...snapshot);
+        for (let snap of snapshot) {
+          if (this.shouldUpdateLatest(snap.release_date)) {
+            this.pendingMangas.push(snap);
+          }
+        }
         this.updateLatest();
       });
+  }
+  // TODO: Make time diff adjustable and add button to manually update
+  private shouldUpdateLatest(release_date: string) {
+    if (release_date !== '') {
+      const timeDiff = Math.abs(moment(release_date, 'MM/DD/YYYY').diff(moment.now(), 'days'));
+      return timeDiff > 7;
+    }
+    return true;
   }
 
   connect(collectionViewer: CollectionViewer): Observable<MangaItem[] | readonly MangaItem[]> {
@@ -45,9 +51,7 @@ export class MangaItemDataSource implements DataSource<MangaItem> {
     this.loadingSubject.complete();
     this.lengthSubject.complete();
   }
-  // TODO: Save latest manga in db, only update
-  // if it has been a week since the previous update
-  // (make this time diff adjustable and add button to manually update)
+
   loadMangas(pageIndex: number = 0, pageSize: number = 5) {
     this.loadingSubject.next(true);
 
@@ -67,13 +71,6 @@ export class MangaItemDataSource implements DataSource<MangaItem> {
     this.mangasSubject.next(this.handlePaging(this.mangaItems, pageIndex, pageSize));
   }
 
-  getLatest(id: string): Chapter {
-    if (this.chapterMap.has(id)) {
-      return this.chapterMap.get(id) as Chapter;
-    }
-    return { release_date: '', latest_chapter: 0, chapter_link: '' };
-  }
-
   updateLatest() {
     while (this.pendingMangas.length > 0) {
       const batch = this.pendingMangas.slice(0, this.BATCH_SIZE);
@@ -83,12 +80,8 @@ export class MangaItemDataSource implements DataSource<MangaItem> {
           if ('mangas' in latest_data) {
             const mangas = latest_data['mangas'] as Array<MangaItem>;
             for (let manga of mangas) {
-              const chapter = {
-                'chapter_link': manga.chapter_link,
-                'release_date': manga.release_date,
-                'latest_chapter': manga.latest_chapter
-              };
-              this.chapterMap.set(manga.id, chapter);
+              this.fbService.updateLatestChapter(
+                manga.id, manga.latest_chapter, manga.release_date, manga.chapter_link);
             }
           }
         });

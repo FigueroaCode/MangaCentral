@@ -1,12 +1,16 @@
 <button mat-button (click)="authService.logout()">Logout</button>
 <button mat-button (click)="toggleView()">{{showSubs ? "Find Mangas" : "View Subscriptions"}}</button>
 
+<div class="spinner-container" *ngIf="(mangaDataSource.loading$ | async) || (mangaItemDataSource.loading$ | async)">
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+</div>
+
 <!-- ------------------------ Subscription Page ------------------------ -->
 <div [hidden]="!showSubs">
   <div class="subscription-container">
-    <div class="spinner-container" *ngIf="mangaItemDataSource.loading$ | async">
+    <!--<div class="spinner-container" *ngIf="mangaItemDataSource.loading$ | async">
       <mat-spinner></mat-spinner>
-    </div>
+    </div>-->
 
     <table mat-table class="manga-table" [dataSource]="mangaItemDataSource">
       <ng-container matColumnDef="mangas">
@@ -18,18 +22,17 @@
             </div>
             <div class="manga-details-container">
               <a class="manga-title" [href]="manga.link" target="_blank" rel="noreferrer">{{manga.name}}</a>
-              <div *ngIf="mangaItemDataSource.getLatest(manga.id).release_date !== ''" class="chapter-details">
-                <a
-                   class="chapter-link"
-                   [href]="mangaItemDataSource.getLatest(manga.id).chapter_link"
+              <div *ngIf="manga.release_date !== ''" class="chapter-details">
+                <a class="chapter-link"
+                   [href]="manga.chapter_link"
                    target="_blank"
                    rel="noreferrer">
-                  Latest Chapter: {{mangaItemDataSource.getLatest(manga.id).latest_chapter}}
+                  Latest Chapter: {{manga.latest_chapter}}
                 </a>
-                <span class="chapter-date">{{mangaItemDataSource.getLatest(manga.id).release_date}}</span>
+                <span class="chapter-date">{{manga.release_date}}</span>
               </div>
-              <div *ngIf="mangaItemDataSource.getLatest(manga.id).release_date === ''">
-                <p>Latest Chapter data is pending!</p>
+              <div *ngIf="manga.release_date === ''">
+                <p>Retrieving Latest Chapter data!</p>
               </div>
 
               <button mat-button (click)="removeSubscription(manga.id)" color="accent">Get this out of Here!</button>
@@ -63,9 +66,9 @@
       </mat-form-field>
     </div>
 
-    <div class="spinner-container" *ngIf="mangaDataSource.loading$ | async">
+    <!--<div class="spinner-container" *ngIf="mangaDataSource.loading$ | async">
       <mat-spinner></mat-spinner>
-    </div>
+    </div>-->
 
     <table mat-table class="manga-table" [dataSource]="mangaDataSource">
       <ng-container matColumnDef="mangas">
