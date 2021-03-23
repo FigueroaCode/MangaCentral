@@ -31,6 +31,22 @@ export class FirebaseService {
     return new Observable<MangaItem[]>();
   }
 
+  subscriptionAdded(): Observable<MangaItem[]> {
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        const user = JSON.parse(userJson);
+        const userRef: AngularFirestoreDocument<any> = this.afs.doc(`users/${user.uid}`);
+        return userRef.collection('subscriptions').stateChanges(['added']).pipe(
+          map(data => {
+            return data.map(res => {
+              return { ...res.payload.doc.data(), id: res.payload.doc.id, release_date: '', chapter_link: '', latest_chapter: 0 }
+            })
+          })
+        ) as Observable<MangaItem[]>;
+      }
+      return new Observable<MangaItem[]>();
+    }
+
   saveManga(manga: Manga, source: string) {
     const userJson = localStorage.getItem('user');
     if (userJson) {

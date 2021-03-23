@@ -55,8 +55,6 @@ export class CollectionComponent implements OnInit, AfterViewInit {
   }
 
   searchMangaSite(mangaKeywords: string) {
-    // TODO: Its a little slow when navigating to next page, might be fetching twice or something
-    // probably should make mangaKeywords a class variable and only setup the paginator in the afterviewinit
     this.mangaDataSource.search(
       this.selectedSite, mangaKeywords,
       this.paginator.toArray()[1].pageIndex, this.paginator.toArray()[1].pageSize)

@@ -1,6 +1,7 @@
 <button mat-button (click)="authService.logout()">Logout</button>
 <button mat-button (click)="toggleView()">{{showSubs ? "Find Mangas" : "View Subscriptions"}}</button>
 
+<!-- ------------------------ Subscription Page ------------------------ -->
 <div [hidden]="!showSubs">
   <div class="subscription-container">
     <div class="spinner-container" *ngIf="mangaItemDataSource.loading$ | async">
@@ -13,13 +14,22 @@
         <td mat-cell *matCellDef="let manga">
           <div class="manga-item">
             <div>
-              <img [src]="manga.img_src" class="manga-img"/>
+              <img [src]="manga.img_src" class="manga-img" />
             </div>
             <div class="manga-details-container">
               <a class="manga-title" [href]="manga.link" target="_blank" rel="noreferrer">{{manga.name}}</a>
-              <div class="chapter-details">
-                <a class="chapter-link" [href]="manga.chapter_link" target="_blank" rel="noreferrer">Latest Chapter: {{manga.latest_chapter}}</a>
-                <span class="chapter-date">{{manga.release_date}}</span>
+              <div *ngIf="mangaItemDataSource.getLatest(manga.id).release_date !== ''" class="chapter-details">
+                <a
+                   class="chapter-link"
+                   [href]="mangaItemDataSource.getLatest(manga.id).chapter_link"
+                   target="_blank"
+                   rel="noreferrer">
+                  Latest Chapter: {{mangaItemDataSource.getLatest(manga.id).latest_chapter}}
+                </a>
+                <span class="chapter-date">{{mangaItemDataSource.getLatest(manga.id).release_date}}</span>
+              </div>
+              <div *ngIf="mangaItemDataSource.getLatest(manga.id).release_date === ''">
+                <p>Latest Chapter data is pending!</p>
               </div>
 
               <button mat-button (click)="removeSubscription(manga.id)" color="accent">Get this out of Here!</button>
@@ -35,6 +45,7 @@
   </div>
 </div>
 
+<!-- ------------------------ Manga Search Page ------------------------ -->
 <div [hidden]="showSubs">
   <div class="search-results-container">
     <div>
