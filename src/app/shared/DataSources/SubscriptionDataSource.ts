@@ -2,20 +2,25 @@ import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { FirebaseService } from '../services/firebase.service';
-import { MangaItem } from '../interfaces/mangaitem';
+import { Subscription } from '../interfaces/subscription';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
+import { MatPaginator } from '@angular/material/paginator';
 
-export class MangaItemDataSource implements DataSource<MangaItem> {
-  private mangasSubject = new BehaviorSubject<MangaItem[]>([]);
+export class SubscriptionDataSource implements DataSource<Subscription> {
+  private mangasSubject = new BehaviorSubject<Subscription[]>([]);
   private loadingSubject = new BehaviorSubject<boolean>(false);
   private lengthSubject = new BehaviorSubject<number>(0);
 
-  private mangaItems: MangaItem[] = [];
-  private pendingMangas: MangaItem[] = [];
+  private paginator!: MatPaginator;
+
+  private subscriptions: Subscription[] = [];
+  private pendingMangas: Subscription[] = [];
 
   private BATCH_SIZE = 30;
+  private DEFAULT_PAGE_INDEX = 0;
+  private DEFAULT_PAGE_SIZE = 5;
 
   public loading$ = this.loadingSubject.asObservable();
   public length$ = this.lengthSubject.asObservable();
@@ -26,7 +31,7 @@ export class MangaItemDataSource implements DataSource<MangaItem> {
       .pipe(catchError(() => of([])))
       .subscribe(snapshot => {
         for (let snap of snapshot) {
-          if (this.shouldUpdateLatest(snap.release_date)) {
+          if (this.shouldUpdateLatest(snap.release_date, snap.scheduledRefresh)) {
             this.pendingMangas.push(snap);
           }
         }
@@ -34,15 +39,19 @@ export class MangaItemDataSource implements DataSource<MangaItem> {
       });
   }
   // TODO: Make time diff adjustable and add button to manually update
-  private shouldUpdateLatest(release_date: string) {
+  private shouldUpdateLatest(release_date: string, timeLimit: number) {
     if (release_date !== '') {
       const timeDiff = Math.abs(moment(release_date, 'MM/DD/YYYY').diff(moment.now(), 'days'));
-      return timeDiff > 7;
+      return timeDiff >= timeLimit;
     }
     return true;
   }
 
-  connect(collectionViewer: CollectionViewer): Observable<MangaItem[] | readonly MangaItem[]> {
+  setPaginator(pag: MatPaginator) {
+    this.paginator = pag;
+  }
+
+  connect(collectionViewer: CollectionViewer): Observable<Subscription[] | readonly Subscription[]> {
     return this.mangasSubject.asObservable();
   }
 
@@ -52,23 +61,19 @@ export class MangaItemDataSource implements DataSource<MangaItem> {
     this.lengthSubject.complete();
   }
 
-  loadMangas(pageIndex: number = 0, pageSize: number = 5) {
+  loadMangas() {
     this.loadingSubject.next(true);
 
     this.fbService.getSubscriptions()
       .pipe(catchError(() => of([])))
       .subscribe(snapshot => {
         if (snapshot) {
-          this.mangaItems = snapshot;
-          this.lengthSubject.next(this.mangaItems.length);
-          this.setContent(pageIndex, pageSize);
+          this.subscriptions = snapshot;
+          this.lengthSubject.next(this.subscriptions.length);
+          this.setContent();
           this.loadingSubject.next(false);
         }
       });
-  }
-
-  setContent(pageIndex: number, pageSize: number) {
-    this.mangasSubject.next(this.handlePaging(this.mangaItems, pageIndex, pageSize));
   }
 
   updateLatest() {
@@ -78,7 +83,7 @@ export class MangaItemDataSource implements DataSource<MangaItem> {
       this.httpClient.post(`${environment.api_url}/latest`, JSON.stringify({ 'mangas': batch }))
         .subscribe(latest_data => {
           if ('mangas' in latest_data) {
-            const mangas = latest_data['mangas'] as Array<MangaItem>;
+            const mangas = latest_data['mangas'] as Array<Subscription>;
             for (let manga of mangas) {
               this.fbService.updateLatestChapter(
                 manga.id, manga.latest_chapter, manga.release_date, manga.chapter_link);
@@ -89,14 +94,20 @@ export class MangaItemDataSource implements DataSource<MangaItem> {
       this.pendingMangas.splice(0, this.BATCH_SIZE);
     }
   }
-  // TODO: When deleting from not the first page,
-  // after deletion it shows the first page instead of the page it was on
-  private handlePaging(data: MangaItem[] | never[], pageIndex: number, pageSize: number): MangaItem[] {
-    const curMangas: MangaItem[] = [];
+
+  setContent() {
+    this.mangasSubject.next(this.handlePaging());
+  }
+  // TODO: When deleting if there are no more items on the page,
+  // it should reset to the previous page
+  private handlePaging(): Subscription[] {
+    const curMangas: Subscription[] = [];
+    const pageSize = this.paginator ? this.paginator.pageSize : this.DEFAULT_PAGE_SIZE;
+    const pageIndex = this.paginator ? this.paginator.pageIndex : this.DEFAULT_PAGE_INDEX;
 
     for (let i = 0; i < pageSize; i++) {
       const index = i + pageIndex * pageSize;
-      const manga = data[index];
+      const manga = this.subscriptions[index];
       if (manga) {
         curMangas.push(manga);
       } else {

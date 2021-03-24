@@ -4,10 +4,23 @@ import { AuthService } from '../shared/services/auth.service';
 import { FirebaseService } from '../shared/services/firebase.service';
 import { HttpClient } from '@angular/common/http';
 import { Manga } from '../shared/interfaces/manga';
-import { MangaItem } from '../shared/interfaces/mangaitem';
-import { MangaItemDataSource } from '../shared/DataSources/MangaItemDataSource';
+import { Subscription } from '../shared/interfaces/subscription';
+import { SubscriptionDataSource } from '../shared/DataSources/SubscriptionDataSource';
 import { MangaDataSource } from '../shared/DataSources/MangaDataSource';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
+import * as moment from 'moment';
+
+interface DatetimeOption {
+  name: string;
+  timeInDays: number;
+}
+
+interface Chapter {
+  chapter_number: number;
+  date: string;
+  link: string;
+}
 
 @Component({
   selector: 'app-collection',
@@ -16,37 +29,51 @@ import { tap } from 'rxjs/operators';
 })
 export class CollectionComponent implements OnInit, AfterViewInit {
   displayedColumns = ['mangas'];
-  mangaItemDataSource: MangaItemDataSource;
+  subscriptionDataSource: SubscriptionDataSource;
   mangaDataSource: MangaDataSource;
 
   @ViewChildren(MatPaginator) paginator!: QueryList<MatPaginator>;
 
   mangaSites = ['manga4life.com'];
   selectedSite = 'manga4life.com';
+
+  timeUpdateOptions: DatetimeOption[] = [
+    {
+      name: 'Every day',
+      timeInDays: 1
+    },
+    {
+      name: 'Every week',
+      timeInDays: 7
+    },
+    {
+      name: 'Every month',
+      timeInDays: 30
+    }
+  ];
   showSubs = true;
 
   mangas: Array<Manga> = [];
   // TODO: Don't let adding of already subscribed mangas
-  mangaSubscriptions: Array<MangaItem> = [];
+  mangaSubscriptions: Array<Subscription> = [];
 
   constructor(
     public authService: AuthService,
     public fbService: FirebaseService,
     private httpClient: HttpClient) {
-    this.mangaItemDataSource = new MangaItemDataSource(this.fbService, this.httpClient);
+    this.subscriptionDataSource = new SubscriptionDataSource(this.fbService, this.httpClient);
     this.mangaDataSource = new MangaDataSource(this.httpClient);
   }
 
   ngOnInit(): void {
-    this.mangaItemDataSource.loadMangas();
+    this.subscriptionDataSource.loadMangas();
   }
 
   ngAfterViewInit() {
+    //this.SubscriptionDataSource.loadMangas();
     // Pagination for Manga Items
-    this.paginator.toArray()[0].page.pipe(
-      tap(() => this.mangaItemDataSource.setContent(
-        this.paginator.toArray()[0].pageIndex, this.paginator.toArray()[0].pageSize))
-    ).subscribe();
+    this.subscriptionDataSource.setPaginator(this.paginator.toArray()[0]);
+    this.paginator.toArray()[0].page.pipe(tap(() => this.subscriptionDataSource.setContent())).subscribe();
     // Pagination for Manga search results
     this.paginator.toArray()[1].page.pipe(
       tap(() => this.mangaDataSource.setContent(
@@ -61,6 +88,24 @@ export class CollectionComponent implements OnInit, AfterViewInit {
       this.paginator.toArray()[1].pageIndex, this.paginator.toArray()[1].pageSize)
   }
 
+  refreshLatestChapter(manga: Subscription) {
+    this.httpClient.get(`${environment.api_url}/latest_chapter/${manga.source}/${manga.link}`)
+      .subscribe(chapter => {
+        if ('latest_chapter' in chapter) {
+          const latest_chapter = chapter['latest_chapter'] as Chapter;
+          if (latest_chapter.link !== '') {
+            if (manga.release_date === '' ||
+              moment(latest_chapter.date, 'MM/DD/YYYY').isSameOrAfter(moment(manga.release_date, 'MM/DD/YYYY'))) {
+              this.fbService.updateLatestChapter(manga.id,
+                latest_chapter.chapter_number, latest_chapter.date, latest_chapter.link);
+            }
+          } else {
+            console.log('Failed to retrieve data.')
+          }
+        }
+      });
+  }
+
   subscribe(manga: Manga) {
     this.fbService.saveManga(manga, this.selectedSite);
   }
@@ -71,5 +116,9 @@ export class CollectionComponent implements OnInit, AfterViewInit {
 
   toggleView() {
     this.showSubs = !this.showSubs;
+  }
+
+  updateTime(id: string, days: number) {
+    this.fbService.updateScheduledRefresh(id, days);
   }
 }

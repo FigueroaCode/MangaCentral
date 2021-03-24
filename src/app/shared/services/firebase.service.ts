@@ -4,7 +4,6 @@ import { AngularFirestore, AngularFirestoreDocument, DocumentChangeAction } from
 
 import { Manga } from '../interfaces/manga';
 import { Subscription } from '../interfaces/subscription';
-import { MangaItem } from '../interfaces/mangaitem';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -15,17 +14,17 @@ export class FirebaseService {
 
   constructor(public afs: AngularFirestore) { }
 
-  getSubscriptions(): Observable<MangaItem[]> {
+  getSubscriptions(): Observable<Subscription[]> {
     const userJson = localStorage.getItem('user');
     if (userJson) {
       const user = JSON.parse(userJson);
       const userRef: AngularFirestoreDocument<any> = this.afs.doc(`users/${user.uid}`);
-      return userRef.collection('subscriptions').valueChanges() as Observable<MangaItem[]>;
+      return userRef.collection('subscriptions').valueChanges() as Observable<Subscription[]>;
     }
-    return new Observable<MangaItem[]>();
+    return new Observable<Subscription[]>();
   }
 
-  subscriptionAdded(): Observable<MangaItem[]> {
+  subscriptionAdded(): Observable<Subscription[]> {
       const userJson = localStorage.getItem('user');
       if (userJson) {
         const user = JSON.parse(userJson);
@@ -36,9 +35,9 @@ export class FirebaseService {
               return { ...res.payload.doc.data(), id: res.payload.doc.id }
             })
           })
-        ) as Observable<MangaItem[]>;
+        ) as Observable<Subscription[]>;
       }
-      return new Observable<MangaItem[]>();
+      return new Observable<Subscription[]>();
     }
 
   saveManga(manga: Manga, source: string) {
@@ -46,9 +45,9 @@ export class FirebaseService {
     if (userJson) {
       const user = JSON.parse(userJson);
       const userRef: AngularFirestoreDocument<any> = this.afs.doc(`users/${user.uid}`);
-      const data: MangaItem = {
+      const data: Subscription = {
         ...manga, source: source, last_read: 0, id: '',
-        release_date: '', chapter_link: '', latest_chapter: 0
+        release_date: '', chapter_link: '', latest_chapter: 0, scheduledRefresh: 1
       };
       return userRef.collection('subscriptions').add(data).then(res => {
         userRef.collection('subscriptions').doc(res.id).update({ id: res.id });
@@ -57,7 +56,7 @@ export class FirebaseService {
     return null;
   }
 
-  updateManga(manga: MangaItem) {
+  updateManga(manga: Subscription) {
     const userJson = localStorage.getItem('user');
     if (userJson) {
       const user = JSON.parse(userJson);
@@ -79,6 +78,17 @@ export class FirebaseService {
         chapter_link: chapterLink
       };
       return userRef.collection('subscriptions').doc(id).update(chapter);
+    }
+    return null;
+  }
+
+  updateScheduledRefresh(id: string, days: number) {
+    const userJson = localStorage.getItem('user');
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      const userRef: AngularFirestoreDocument<any> = this.afs.doc(`users/${user.uid}`);
+
+      return userRef.collection('subscriptions').doc(id).update({scheduledRefresh: days});
     }
     return null;
   }
