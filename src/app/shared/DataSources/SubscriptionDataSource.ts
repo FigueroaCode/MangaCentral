@@ -38,13 +38,17 @@ export class SubscriptionDataSource implements DataSource<Subscription> {
         this.updateLatest();
       });
   }
-  // TODO: Make time diff adjustable and add button to manually update
+
   private shouldUpdateLatest(release_date: string, timeLimit: number) {
     if (release_date !== '') {
       const timeDiff = Math.abs(moment(release_date, 'MM/DD/YYYY').diff(moment.now(), 'days'));
       return timeDiff >= timeLimit;
     }
     return true;
+  }
+
+  get subscriptionList() {
+    return this.subscriptions;
   }
 
   setPaginator(pag: MatPaginator) {

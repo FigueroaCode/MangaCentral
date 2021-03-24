@@ -7,7 +7,7 @@ import { Manga } from '../shared/interfaces/manga';
 import { Subscription } from '../shared/interfaces/subscription';
 import { SubscriptionDataSource } from '../shared/DataSources/SubscriptionDataSource';
 import { MangaDataSource } from '../shared/DataSources/MangaDataSource';
-import { tap } from 'rxjs/operators';
+import { tap, take } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import * as moment from 'moment';
 
@@ -51,10 +51,10 @@ export class CollectionComponent implements OnInit, AfterViewInit {
       timeInDays: 30
     }
   ];
+
   showSubs = true;
 
   mangas: Array<Manga> = [];
-  // TODO: Don't let adding of already subscribed mangas
   mangaSubscriptions: Array<Subscription> = [];
 
   constructor(
@@ -70,7 +70,6 @@ export class CollectionComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    //this.SubscriptionDataSource.loadMangas();
     // Pagination for Manga Items
     this.subscriptionDataSource.setPaginator(this.paginator.toArray()[0]);
     this.paginator.toArray()[0].page.pipe(tap(() => this.subscriptionDataSource.setContent())).subscribe();
@@ -82,10 +81,9 @@ export class CollectionComponent implements OnInit, AfterViewInit {
   }
 
   searchMangaSite(mangaKeywords: string) {
-    // TODO: Don't search while loading results (to avoid spamming the api)
     this.mangaDataSource.search(
       this.selectedSite, mangaKeywords,
-      this.paginator.toArray()[1].pageIndex, this.paginator.toArray()[1].pageSize)
+      this.paginator.toArray()[1].pageIndex, this.paginator.toArray()[1].pageSize);
   }
 
   refreshLatestChapter(manga: Subscription) {
@@ -120,5 +118,14 @@ export class CollectionComponent implements OnInit, AfterViewInit {
 
   updateTime(id: string, days: number) {
     this.fbService.updateScheduledRefresh(id, days);
+  }
+
+  isSubscribed(manga: Manga) {
+    for (let sub of this.subscriptionDataSource.subscriptionList) {
+      if (manga.link === sub.link) {
+        return true;
+      }
+    }
+    return false;
   }
 }

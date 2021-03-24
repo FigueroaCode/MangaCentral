@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Manga } from '../interfaces/manga';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { catchError } from 'rxjs/operators';
 
 export class MangaDataSource implements DataSource<Manga> {
   private mangasSubject = new BehaviorSubject<Manga[]>([]);
@@ -30,16 +31,18 @@ export class MangaDataSource implements DataSource<Manga> {
     this.loadingSubject.next(true);
 
     let url = `${environment.api_url}/search/${site}/${keywords}`;
-    this.httpClient.get(url).subscribe(data => {
-      // TODO: Check for status code?
-      if ('mangas' in data) {
-        this.curMangas = data['mangas'] as Array<Manga>;
-        this.lengthSubject.next(this.curMangas.length);
-        // Show the paged results
-        this.setContent(pageIndex, pageSize);
+    this.httpClient.get(url)
+      .pipe(catchError(err => of([])))
+      .subscribe(data => {
+        // TODO: Handle errors
+        if ('mangas' in data) {
+          this.curMangas = data['mangas'] as Array<Manga>;
+          this.lengthSubject.next(this.curMangas.length);
+          // Show the paged results
+          this.setContent(pageIndex, pageSize);
+        }
         this.loadingSubject.next(false);
-      }
-    })
+    });
   }
 
   setContent(pageIndex: number = 0, pageSize: number = 5) {
