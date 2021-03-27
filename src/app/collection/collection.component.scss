@@ -21,11 +21,16 @@
   flex-direction: row;
 }
 
+.manga-img-container {
+    display: flex;
+    align-items: center;
+}
+
 .manga-img {
-    width: auto;
-    height: auto;
-    max-width: 200px;
-    max-height: 200px;
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  object-position: center;
 }
 
 .manga-details-container {

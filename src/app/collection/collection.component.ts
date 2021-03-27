@@ -7,7 +7,7 @@ import { Manga } from '../shared/interfaces/manga';
 import { Subscription } from '../shared/interfaces/subscription';
 import { SubscriptionDataSource } from '../shared/DataSources/SubscriptionDataSource';
 import { MangaDataSource } from '../shared/DataSources/MangaDataSource';
-import { tap, take } from 'rxjs/operators';
+import { tap, take, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import * as moment from 'moment';
 
@@ -28,13 +28,15 @@ interface Chapter {
   styleUrls: ['./collection.component.scss']
 })
 export class CollectionComponent implements OnInit, AfterViewInit {
+  default_img = '/assets/images/no_manga_img.png'
+
   displayedColumns = ['mangas'];
   subscriptionDataSource: SubscriptionDataSource;
   mangaDataSource: MangaDataSource;
 
   @ViewChildren(MatPaginator) paginator!: QueryList<MatPaginator>;
 
-  mangaSites = ['manga4life.com'];
+  mangaSites = ['manga4life.com', 'manganelo.com', 'leviatanscans.com', 'reaperscans.com'];
   selectedSite = 'manga4life.com';
 
   timeUpdateOptions: DatetimeOption[] = [
@@ -53,6 +55,7 @@ export class CollectionComponent implements OnInit, AfterViewInit {
   ];
 
   showSubs = true;
+  hasSearched = false;
 
   mangas: Array<Manga> = [];
   mangaSubscriptions: Array<Subscription> = [];
@@ -84,6 +87,7 @@ export class CollectionComponent implements OnInit, AfterViewInit {
     this.mangaDataSource.search(
       this.selectedSite, mangaKeywords,
       this.paginator.toArray()[1].pageIndex, this.paginator.toArray()[1].pageSize);
+    this.hasSearched = true;
   }
 
   refreshLatestChapter(manga: Subscription) {
@@ -99,6 +103,9 @@ export class CollectionComponent implements OnInit, AfterViewInit {
             }
           } else {
             console.log('Failed to retrieve data.')
+            if ('error' in chapter) {
+              console.log(chapter['error']);
+            }
           }
         }
       });

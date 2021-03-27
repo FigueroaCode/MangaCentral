@@ -39,7 +39,7 @@ export class FirebaseService {
       }
       return new Observable<Subscription[]>();
     }
-
+  // TODO: Error Handling
   saveManga(manga: Manga, source: string) {
     const userJson = localStorage.getItem('user');
     if (userJson) {
@@ -55,7 +55,7 @@ export class FirebaseService {
     }
     return null;
   }
-
+  // TODO: Error Handling
   updateManga(manga: Subscription) {
     const userJson = localStorage.getItem('user');
     if (userJson) {
@@ -66,7 +66,7 @@ export class FirebaseService {
     }
     return null;
   }
-
+  // TODO: Error Handling
   updateLatestChapter(id: string, latestChapter: number, releaseDate: string, chapterLink: string) {
     const userJson = localStorage.getItem('user');
     if (userJson) {
@@ -81,7 +81,7 @@ export class FirebaseService {
     }
     return null;
   }
-
+  // TODO: Error Handling
   updateScheduledRefresh(id: string, days: number) {
     const userJson = localStorage.getItem('user');
     if (userJson) {
@@ -92,7 +92,7 @@ export class FirebaseService {
     }
     return null;
   }
-
+  // TODO: Error Handling
   removeManga(id: string) {
     const userJson = localStorage.getItem('user');
     if (userJson) {

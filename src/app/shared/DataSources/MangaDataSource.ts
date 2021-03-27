@@ -32,11 +32,16 @@ export class MangaDataSource implements DataSource<Manga> {
 
     let url = `${environment.api_url}/search/${site}/${keywords}`;
     this.httpClient.get(url)
-      .pipe(catchError(err => of([])))
+      .pipe(catchError(err => of(err.error)))
       .subscribe(data => {
-        // TODO: Handle errors
+        // TODO: Error Handling
         if ('mangas' in data) {
           this.curMangas = data['mangas'] as Array<Manga>;
+          this.lengthSubject.next(this.curMangas.length);
+          // Show the paged results
+          this.setContent(pageIndex, pageSize);
+        } else if ('error' in data) {
+          this.curMangas = [];
           this.lengthSubject.next(this.curMangas.length);
           // Show the paged results
           this.setContent(pageIndex, pageSize);
@@ -46,9 +51,7 @@ export class MangaDataSource implements DataSource<Manga> {
   }
 
   setContent(pageIndex: number = 0, pageSize: number = 5) {
-    if (this.curMangas.length > 0) {
-      this.mangasSubject.next(this.handlePaging(this.curMangas, pageIndex, pageSize));
-    }
+    this.mangasSubject.next(this.handlePaging(this.curMangas, pageIndex, pageSize));
   }
 
   private handlePaging(data: Manga[] | never[], pageIndex: number, pageSize: number): Manga[] {

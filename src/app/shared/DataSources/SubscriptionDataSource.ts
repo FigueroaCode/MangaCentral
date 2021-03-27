@@ -83,8 +83,8 @@ export class SubscriptionDataSource implements DataSource<Subscription> {
   updateLatest() {
     while (this.pendingMangas.length > 0) {
       const batch = this.pendingMangas.slice(0, this.BATCH_SIZE);
-
       this.httpClient.post(`${environment.api_url}/latest`, JSON.stringify({ 'mangas': batch }))
+        .pipe(catchError(err => of(err.error)))
         .subscribe(latest_data => {
           if ('mangas' in latest_data) {
             const mangas = latest_data['mangas'] as Array<Subscription>;
@@ -92,6 +92,8 @@ export class SubscriptionDataSource implements DataSource<Subscription> {
               this.fbService.updateLatestChapter(
                 manga.id, manga.latest_chapter, manga.release_date, manga.chapter_link);
             }
+          } else if ('error' in latest_data) {
+            console.log(latest_data['error'])
           }
         });
       // Remove the current batch from queue
